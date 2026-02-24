@@ -35,14 +35,14 @@
       };
 
       mkFlash =
-        name: uf2File:
+        keyboard:
         pkgs.writeShellApplication {
-          name = "flash-${name}";
+          name = "flash-${keyboard.name}";
           runtimeInputs = [
             pkgs.coreutils
             pkgs.util-linux
           ];
-          runtimeEnv.UF2_FILE = uf2File;
+          runtimeEnv.UF2_FILE = "${keyboard}/zmk.uf2";
           text = builtins.readFile ./nix/flash.sh;
         };
 
@@ -73,6 +73,21 @@
         }
       );
 
+      sofle_dongle = zmk.buildKeyboard (
+        commonArgs
+        // {
+          name = "sofle_dongle";
+          shield = "sofle_dongle dongle_display";
+          snippets = [ "studio-rpc-usb-uart" ];
+          enableZmkStudio = true;
+          extraCmakeFlags = [
+            "-DCONFIG_ZMK_SPLIT=y"
+            "-DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y"
+            "-DCONFIG_ZMK_STUDIO_LOCKING=n"
+          ];
+        }
+      );
+
       treefmtEval = treefmt-nix.lib.evalModule pkgs {
         programs.nixfmt.enable = true;
         programs.shfmt.enable = true;
@@ -86,12 +101,14 @@
           sofle_left
           sofle_right
           settings_reset
+          sofle_dongle
           formatter
           ;
 
-        flash-left = mkFlash "sofle_left" "${sofle_left}/zmk.uf2";
-        flash-right = mkFlash "sofle_right" "${sofle_right}/zmk.uf2";
-        flash-reset = mkFlash "settings_reset" "${settings_reset}/zmk.uf2";
+        flash-left = mkFlash sofle_left;
+        flash-right = mkFlash sofle_right;
+        flash-reset = mkFlash settings_reset;
+        flash-dongle = mkFlash sofle_dongle;
       };
     in
     {
