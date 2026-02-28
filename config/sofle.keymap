@@ -32,7 +32,7 @@
             bindings = <
 &kp ESC          &kp F1           &kp C_VOL_DN     &kp C_VOL_UP     &kp C_MUTE       &kp C_BRI_DN                                  &kp C_BRI_UP     &kp F7           &kp F8           &kp F9           &kp F10          &kp DEL
 &kp F2           &kp F3           &kp F4           &kp F5           &kp F6           &none                                         &kp F11          &kp F12          &kp HOME         &kp END          &kp PG_UP        &kp BSPC
-&kp LC(Z)        &kp LC(X)        &kp LC(C)        &kp LC(V)        &kp LC(Y)        &kp LC(A)                                     &kp INS          &kp LEFT         &kp DOWN         &kp UP           &kp RIGHT        &kp ENTER
+&kp LC(Z)        &kp LC(X)        &kp LC(C)        &kp LC(V)        &kp LC(Y)        &kp LC(A)                                     &kp LEFT         &kp DOWN         &kp UP           &kp RIGHT        &kp INS          &kp ENTER
 &none            &none            &none            &none            &none            &none            &none            &none       &kp PG_DN        &none            &none            &none            &none            &none
                                   &none            &none            &none            &none            &none            &none       &none            &none            &none            &none
             >;
@@ -43,7 +43,7 @@
             bindings = <
 &none            &none            &none            &none            &none            &none                                         &none            &none            &none            &none            &none            &none
 &none            &none            &none            &none            &none            &none                                         &none            &none            &none            &none            &msc SCRL_UP     &none
-&none            &none            &none            &none            &none            &none                                         &none            &mmv MOVE_LEFT   &mmv MOVE_DOWN   &mmv MOVE_UP     &mmv MOVE_RIGHT  &none
+&none            &none            &none            &none            &none            &none                                         &mmv MOVE_LEFT   &mmv MOVE_DOWN   &mmv MOVE_UP     &mmv MOVE_RIGHT  &none            &none
 &none            &none            &none            &none            &none            &none            &none            &none       &msc SCRL_DOWN   &none            &none            &none            &none            &none
                                   &none            &none            &none            &none            &none            &none       &mkp LCLK        &mkp MCLK        &mkp RCLK        &tog MOUSE
             >;
