@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     zmk-nix = {
-      url = "github:lilyinstarlight/zmk-nix";
+      url = "path:/home/aabccd021/ghq/github.com/aabccd021/zmk-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     treefmt-nix.url = "github:numtide/treefmt-nix";
@@ -28,32 +28,37 @@
         ];
       };
 
-      commonArgs = {
+      # Build west dependencies ONCE and share across all keyboards
+      westDeps = zmk.fetchZephyrDeps {
+        name = "sofle-west-deps";
         inherit src;
-        board = "nice_nano_v2";
-        zephyrDepsHash = "sha256-xc8u2Kc6j9sWskmThcLLI5dQYxWm70mHrU9ZqC1huzY=";
+        westRoot = "config";
+        hash = "sha256-fgZTRT4+tTGm2k4lFZQx+bghyDOliakRqRAdhiG+Yoo=";
       };
 
-      mkFlash =
-        keyboard:
-        pkgs.writeShellApplication {
-          name = "flash-${keyboard.name}";
-          runtimeInputs = [
-            pkgs.coreutils
-            pkgs.util-linux
-          ];
-          runtimeEnv.UF2_FILE = "${keyboard}/zmk.uf2";
-          text = builtins.readFile ./nix/flash.sh;
-        };
+      commonArgs = {
+        inherit src westDeps;
+        board = "nice_nano_v2";
+        # Still need this for the derivation, but westDeps overrides it
+        zephyrDepsHash = "sha256-fgZTRT4+tTGm2k4lFZQx+bghyDOliakRqRAdhiG+Yoo=";
+      };
+
+      sofle_dongle = zmk.buildKeyboard (
+        commonArgs
+        // {
+          name = "sofle_dongle";
+          shield = "sofle_dongle dongle_display";
+          snippets = [ "studio-rpc-usb-uart" ];
+          enableZmkStudio = true;
+          extraCmakeFlags = [ "-DCONFIG_ZMK_STUDIO_LOCKING=n" ];
+        }
+      );
 
       sofle_left = zmk.buildKeyboard (
         commonArgs
         // {
           name = "sofle_left";
           shield = "sofle_left";
-          snippets = [ "studio-rpc-usb-uart" ];
-          enableZmkStudio = true;
-          extraCmakeFlags = [ "-DCONFIG_ZMK_STUDIO_LOCKING=n" ];
         }
       );
 
@@ -65,28 +70,24 @@
         }
       );
 
-      settings_reset = zmk.buildKeyboard (
-        commonArgs
-        // {
-          name = "settings_reset";
-          shield = "settings_reset";
-        }
-      );
+      sofle = pkgs.runCommand "sofle" {} ''
+        mkdir -p $out/sofle_{dongle,left,right}
+        ln -s ${sofle_dongle}/zmk.uf2 $out/sofle_dongle/zmk.uf2
+        ln -s ${sofle_left}/zmk.uf2 $out/sofle_left/zmk.uf2
+        ln -s ${sofle_right}/zmk.uf2 $out/sofle_right/zmk.uf2
+      '';
 
-      sofle_dongle = zmk.buildKeyboard (
-        commonArgs
-        // {
-          name = "sofle_dongle";
-          shield = "sofle_dongle dongle_display";
-          snippets = [ "studio-rpc-usb-uart" ];
-          enableZmkStudio = true;
-          extraCmakeFlags = [
-            "-DCONFIG_ZMK_SPLIT=y"
-            "-DCONFIG_ZMK_SPLIT_ROLE_CENTRAL=y"
-            "-DCONFIG_ZMK_STUDIO_LOCKING=n"
-          ];
-        }
-      );
+      flash = pkgs.writeShellApplication {
+        name = "flash";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.util-linux
+        ];
+        runtimeEnv = {
+          KEYBOARD = sofle;
+        };
+        text = builtins.readFile ./nix/flash.sh;
+      };
 
       treefmtEval = treefmt-nix.lib.evalModule pkgs {
         programs.nixfmt.enable = true;
@@ -95,25 +96,15 @@
       };
 
       formatter = treefmtEval.config.build.wrapper;
-
-      packages = {
-        inherit
-          sofle_left
-          sofle_right
-          settings_reset
-          sofle_dongle
-          formatter
-          ;
-
-        flash-left = mkFlash sofle_left;
-        flash-right = mkFlash sofle_right;
-        flash-reset = mkFlash settings_reset;
-        flash-dongle = mkFlash sofle_dongle;
-      };
     in
     {
-      packages.x86_64-linux = packages;
-      checks.x86_64-linux = packages;
+      packages.x86_64-linux = {
+        inherit sofle westDeps flash formatter;
+        default = sofle;
+      };
+      checks.x86_64-linux = {
+        inherit sofle formatter;
+      };
       formatter.x86_64-linux = formatter;
     };
 }

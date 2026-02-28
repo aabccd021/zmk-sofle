@@ -64,17 +64,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1771721465,
-        "narHash": "sha256-/47/2x3rXdbBLo5Rp1wFDqE+DBTxL9uhKnIGa+onzec=",
-        "owner": "lilyinstarlight",
-        "repo": "zmk-nix",
-        "rev": "c53f8e1775f9c15baa40179a4565126137940b13",
-        "type": "github"
+        "lastModified": 1772276826,
+        "narHash": "sha256-7JWF9I1OvUAZyLO0CrUuYXLPM3HtPBau3baegkjV44Y=",
+        "path": "/home/aabccd021/ghq/github.com/aabccd021/zmk-nix",
+        "type": "path"
       },
       "original": {
-        "owner": "lilyinstarlight",
-        "repo": "zmk-nix",
-        "type": "github"
+        "path": "/home/aabccd021/ghq/github.com/aabccd021/zmk-nix",
+        "type": "path"
       }
     }
   },
