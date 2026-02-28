@@ -70,6 +70,14 @@
         }
       );
 
+      settings_reset = zmk.buildKeyboard (
+        commonArgs
+        // {
+          name = "settings_reset";
+          shield = "settings_reset";
+        }
+      );
+
       sofle = pkgs.runCommand "sofle" {} ''
         mkdir -p $out/sofle_{dongle,left,right}
         ln -s ${sofle_dongle}/zmk.uf2 $out/sofle_dongle/zmk.uf2
@@ -99,7 +107,7 @@
     in
     {
       packages.x86_64-linux = {
-        inherit sofle westDeps flash formatter;
+        inherit sofle westDeps flash formatter settings_reset;
         default = sofle;
       };
       checks.x86_64-linux = {
