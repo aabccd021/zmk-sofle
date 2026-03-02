@@ -263,6 +263,7 @@ MODEOF
               -DSHIELD="${shield}" \
               -DZMK_CONFIG="$(pwd)/config" \
               -DZEPHYR_MODULES="$MODULES" \
+              -DBUILD_VERSION="dacab4875df7" \
               ${pkgs.lib.concatStringsSep " " extraCmakeFlags}
 
             cmake --build build
