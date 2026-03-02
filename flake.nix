@@ -250,19 +250,13 @@ MODEOF
             MODULES="$MODULES;$(pwd)"  # For custom boards via zephyr/module.yml
             MODULES="''${MODULES#;}"  # Remove leading semicolon
 
-            # Hide west from PATH so Zephyr doesn't try to use it for module discovery
-            mkdir -p $TMPDIR/fake-bin
-            echo '#!/bin/sh' > $TMPDIR/fake-bin/west
-            echo 'exit 1' >> $TMPDIR/fake-bin/west
-            chmod +x $TMPDIR/fake-bin/west
-            export PATH="$TMPDIR/fake-bin:$PATH"
-
             mkdir -p build
             cmake -S zmk/app -B build -GNinja \
               -DBOARD=nice_nano_v2 \
               -DSHIELD="${shield}" \
               -DZMK_CONFIG="$(pwd)/config" \
               -DZEPHYR_MODULES="$MODULES" \
+              -DZMK_EXTRA_MODULES="$(pwd)" \
               -DBUILD_VERSION="dacab4875df7" \
               ${pkgs.lib.concatStringsSep " " extraCmakeFlags}
 
@@ -322,6 +316,53 @@ MODEOF
         cp ${settings_reset}/zmk.uf2 "$out/settings_reset-nice_nano_v2-zmk.uf2"
       '';
 
+      # Golden commit hashes from emjetech/zmk-sofle@55c4270641e140523a381fd054c6b62094aa1a1f
+      goldenHashes = {
+        settings_reset = "4031c0b2f3482cd7070ea5c57b95f3713785c4ca61441bdd986d81fe7de16957";
+        sofle_dongle = "b8316ea0515a12eeec9ed3c6fdfb0b92874118fd9021f7d4c9bdd160ed4a049b";
+        sofle_left = "92beb43d64fd06981dace6b971cec0588990fe4125f6331e80230091a0d5e768";
+        sofle_right = "3fa9de2483f5acb0b4771b8c391b2f9ac1b6858929c627184b0d417ce3037fcc";
+      };
+
+      # Verification derivation that fails if hashes don't match golden commit
+      verifyHashes = pkgs.runCommand "verify-hashes" {
+        nativeBuildInputs = [ pkgs.coreutils ];
+      } ''
+        echo "Verifying firmware hashes against golden commit..."
+        failed=0
+
+        check_hash() {
+          local name=$1
+          local file=$2
+          local expected=$3
+          local actual=$(sha256sum "$file" | cut -d' ' -f1)
+          if [ "$actual" = "$expected" ]; then
+            echo "✓ $name: $actual"
+          else
+            echo "✗ $name: MISMATCH"
+            echo "  Expected: $expected"
+            echo "  Actual:   $actual"
+            failed=1
+          fi
+        }
+
+        check_hash "settings_reset" "${settings_reset}/zmk.uf2" "${goldenHashes.settings_reset}"
+        check_hash "sofle_dongle" "${sofle_dongle}/zmk.uf2" "${goldenHashes.sofle_dongle}"
+        check_hash "sofle_left" "${sofle_left}/zmk.uf2" "${goldenHashes.sofle_left}"
+        check_hash "sofle_right" "${sofle_right}/zmk.uf2" "${goldenHashes.sofle_right}"
+
+        if [ "$failed" = "1" ]; then
+          echo ""
+          echo "Hash verification FAILED - firmware does not match golden commit"
+          exit 1
+        fi
+
+        echo ""
+        echo "All hashes match golden commit!"
+        mkdir -p $out
+        echo "verified" > $out/status
+      '';
+
       flash = pkgs.writeShellApplication {
         name = "flash";
         runtimeInputs = [
@@ -353,12 +394,13 @@ MODEOF
           flash
           formatter
           zephyrSdk
+          verifyHashes
           ;
         default = sofle;
       };
 
       checks.x86_64-linux = {
-        inherit sofle formatter;
+        inherit sofle formatter verifyHashes;
       };
 
       formatter.x86_64-linux = formatter;
