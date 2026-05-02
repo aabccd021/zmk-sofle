@@ -1,0 +1,2 @@
+- Always use nix to build firmware. Do not use any other build method.
+- Always commit directly to main. Never create feature branches or pull requests for this repo.
