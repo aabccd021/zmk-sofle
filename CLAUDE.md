@@ -1,2 +1,3 @@
 - Always use nix to build firmware. Do not use any other build method.
 - Always commit directly to main. Never create feature branches or pull requests for this repo.
+- Config override order (confirmed by reading ZMK v0.3 CMake source — app/keymap-module/modules/modules.cmake and zephyr/cmake/modules/kconfig.cmake): shield-specific conf files (e.g. boards/shields/sofle/sofle_dongle.conf) are loaded first, then config/sofle.conf is loaded last and wins on conflicts. To set a value per-shield, remove it from sofle.conf and set it only in the shield-specific conf.
